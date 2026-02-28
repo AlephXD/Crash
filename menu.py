@@ -1,12 +1,18 @@
 import pygame, sys
 from botones import Boton
+
 pygame.init()
+pygame.mixer.init()
+
 screen = pygame.display.set_mode([1280, 720])
 pygame.display.set_caption("Crash")
 fondo = pygame.image.load("PortadaFinal.png").convert()
-jugar = Boton("BotonJugar.png", (550, 345), 0.1)
-niveles = Boton("BotonNiveles.png",(550, 445), 0.1)
-salir = Boton("BotonSalirRojo.png", (550, 545), 0.1)
+jugar = Boton("assets//BotonJugar.png", "Sonido//Click.mp3", (550, 345), 0.1)
+niveles = Boton("assets//BotonNiveles.png", "Sonido//Click.mp3", (550, 445), 0.1)
+salir = Boton("assets//BotonSalirRojo.png", "Sonido//Click.mp3", (550, 545), 0.1)
+pygame.mixer.music.load("Sonido//Sonidomenu.mp3")
+pygame.mixer.music.play(-1)
+
 clock = pygame.time.Clock() 
 
 while True:
@@ -33,4 +39,5 @@ while True:
     salir.draw(screen)
 
     pygame.display.flip()
+
     clock.tick(60)
