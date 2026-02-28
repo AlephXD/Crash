@@ -3,6 +3,7 @@ import cons
 from cars import *
 
 pygame.init()
+pygame.mixer.init()
 
 ventana = pygame.display.set_mode((cons.ancho,cons.alto))
 pygame.display.set_caption("CRASH")
@@ -12,6 +13,10 @@ pygame.display.set_caption("CRASH")
 dir_tablero= "assets//tablero.png"
 tablero= pygame.image.load(dir_tablero).convert_alpha()
 tablero = pygame.transform.scale(tablero,(600,600))
+
+#Sonido
+
+agarrar = pygame.mixer.Sound("Sonido//Agarrar.mp3")
 
 #Limites del tablero
 linea_w=pygame.Rect(360,10,700,90)
@@ -70,6 +75,8 @@ while run:
                 for num, carro in enumerate(carros):
                     if carro.forma.collidepoint(event.pos):
                         act_car = num
+                        agarrar.play()
+
                        
                         
         #Soltar
