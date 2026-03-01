@@ -53,7 +53,7 @@ class Game(GameBase):
         self.normal = pygame.image.load(Path("assets")/"Normal.png").convert_alpha()
         self.normal= pygame.transform.scale(self.normal, (200,100))
 
-        
+        self.cargarbotones()
         
         return super().on_start()
         
