@@ -2,7 +2,7 @@ import pygame
 
 from botones import Boton
 from pathlib import Path
-from cars import vehiculo
+from cars import vehiculo, pj
 from enfocate import GameBase, GameMetadata, COLORS
 
 class Game(GameBase):
@@ -24,55 +24,114 @@ class Game(GameBase):
         self.estado = 'start'
         self.estado_prev = None
         self.moviendo = False
-        self.mover = False
         self.cood = ()
         lw=pygame.Rect(360,10,700,90)
         la=pygame.Rect(360,10,45,700)
         ld=pygame.Rect(920,10,50,700)
         ls=pygame.Rect(360,610,700,50)
-        self.mr = self.mv = self.mcr = self.ma = self.mca = self.mcv = self.mg = [lw, la, ld, ls]
+        self.ganar=pygame.Rect(840, 280, 60,60)
+        self.muros = [lw, la, ld, ls]
         self.act_car = None
+        self.load = False
+        self.salir = False
      
     def on_start(self):
         
         self.tablero = pygame.image.load(Path("assets")/"tablero.png").convert_alpha()
         self.tablero = pygame.transform.scale(self.tablero,(600,600))
-        self.camion_r = vehiculo('camionr',(875, 225), Path("assets")/ "camion2.png", (80,250), self.mcr, 'v')
-        self.verde = vehiculo('verde',(445, 180), Path("assets")/ "autoverde2.png",(80,150), self.mv,  'v')
-        self.rojo= vehiculo('rojo',(490,315), Path("assets")/ "rojo2.png",(150,80), self.mr,   'h')
-        dir_jugar= Path("assets")/ "BotonJugar.png"
-        dir_click= Path("Sonido")/"Click.mp3"
-        self.jugar =  Boton(dir_jugar, dir_click, (550, 345), 0.1)
+        
+        self.dir_click= Path("Sonido")/"Click.mp3"
         self.fondo = pygame.image.load("assets//PortadaFinal.png").convert()
-        self.carros = [self.verde,self.camion_r,self.rojo]
-        self.niveles = Boton(Path("assets")/"BotonNiveles.png", Path("Sonido")/"Click.mp3", (550, 445), 0.1)
-        self.salir = Boton(Path("assets")/"BotonSalirRojo.png", Path("Sonido")/"Click.mp3", (550, 545), 0.1)
+
         pygame.mixer.music.load(Path("Sonido")/"Sonidomenu.mp3")
         pygame.mixer.music.play(-1)
+        
         return super().on_start()
         
-    def update(self, dt: float):
+    
+    def victoria(self):
+        print("has ganado")
+    def autos(self):
+        self.camion_r = vehiculo((0, 0), Path("assets")/ "CamionAzul2.png", (80,250), [], 'v')
+        self.morado = vehiculo((0, 0), Path("assets")/ "Automorado2.png",(80,150), [],  'v')
+        self.rojo= pj((0,0), Path("assets")/ "rojo2.png",(150,80), [],   'h', self.ganar)
+        self.negro= vehiculo((0,0), Path("assets")/ "CKcar2.png",(150,80), [],   'h')
+        self.gris= vehiculo((0,0), Path("assets")/ "Autogris2.png",(150,80), [],   'h')
+        self.naranja = vehiculo((0, 0), Path("assets")/ "AutoNaranja2.png",(80,150),[],  'v')
+        self.camion_v = vehiculo((0, 0), Path("assets")/ "CamionVerde2.png", (80,250), [], 'v')
+        self.carros = [self.morado,self.camion_r,self.rojo, self.negro,self.gris,self.naranja, self.camion_v]
+        for iterar in self.carros:
+            iterar.carros.extend(self.carros)
         
+    def boton(self):
+        
+        if self.estado == 'start':
+            self.jugar =  Boton(Path("assets")/ "BotonJugar.png", self.dir_click, (550, 345), 0.1)
+            if self.jugar.es_presionado():
+                self.estado_prev = self.estado
+                self.estado = 'nivel1'
+                self.load = True
+                self.jugar.sound.play()
+            self.niveles = Boton(Path("assets")/"BotonNiveles.png", Path("Sonido")/"Click.mp3", (550, 445), 0.1)
+            if self.niveles.es_presionado():
+                self.estado_prev = self.estado
+                self.estado = 'nivel1'
+                
+                self.jugar.sound.play()
+            self.salir = Boton(Path("assets")/"BotonSalirRojo.png", Path("Sonido")/"Click.mp3", (550, 545), 0.1)
+            if self.salir.es_presionado():
+                self.jugar.sound.play()
+                self._stop_context()
+            self.reiniciar = Boton(Path("assets")/"BotonReiniciar.png", Path("Sonido")/"Click.mp3", (150, 545), 0.1)
+                
+    def update(self, dt: float):
+        if self.estado == 'start':
+            self.boton()
+            self.autos()
+        
+        #NIVEL1#
+        if self.estado == 'nivel1' and self.load == True:
+            self.rojo.forma.center = (580,315)
+            self.morado.forma.center = (530, 520)
+            self.camion_r.forma.center= (875, 480)
+            self.negro.forma.center= (580,405)
+            self.gris.forma.center= (650,570)
+            self.camion_v.forma.center= (700,405)
+            self.load = False
+        
+        if self.estado != 'start' or 'niveles':
+            self.boton()
+    
         if self.moviendo:
             if self.act_car is None:
                 self.moviendo = False
                 return 
-            print(self.cood)
             if self.carros[self.act_car].sen == 'h':
                 old_pos = self.carros[self.act_car].forma.topleft
-                self.mover = True
                 self.carros[self.act_car].forma.move_ip(self.cood[0], 0)
-                print("moviendo")
-                for colision in self.carros[self.act_car].muros:
+                for colision in self.muros:
                     if self.carros[self.act_car].forma.colliderect(colision):
                         self.carros[self.act_car].forma.topleft = old_pos
+                
+                for colision in self.carros[self.act_car].carros:
+                    if colision != self.carros[self.act_car] and self.carros[self.act_car].forma.colliderect(colision.forma):
+                        self.carros[self.act_car].forma.topleft = old_pos
+                
+                if self.carros[self.act_car] == self.rojo:
+                        if self.carros[self.act_car].forma.colliderect(self.carros[self.act_car].victoria):
+                            self.victoria()
                             
             elif self.carros[self.act_car].sen == 'v':
                 old_pos = self.carros[self.act_car].forma.topleft
                 self.carros[self.act_car].forma.move_ip(0, self.cood[1])
-                print("moviendo")
-                for colision in self.carros[self.act_car].muros:
+                
+                for colision in self.muros:
                     if self.carros[self.act_car].forma.colliderect(colision):
+                        self.carros[self.act_car].forma.topleft = old_pos
+                
+                
+                for colision in self.carros[self.act_car].carros:
+                    if colision != self.carros[self.act_car] and self.carros[self.act_car].forma.colliderect(colision.forma):
                         self.carros[self.act_car].forma.topleft = old_pos
             self.moviendo = False
         pass
@@ -89,7 +148,11 @@ class Game(GameBase):
                         for num, carro in enumerate(self.carros):
                             if carro.forma.collidepoint(event.pos):
                                 self.act_car = num
-                       
+                                
+                        if self.reiniciar.es_presionado():
+                            self.reiniciar.sound.play()
+                            self.load = True
+    
                         
                 #Soltar
                 if event.type == pygame.MOUSEBUTTONUP:
@@ -103,10 +166,7 @@ class Game(GameBase):
                         self.moviendo = True
                     
                                             
-                if self.jugar.es_presionado():
-                    self.estado_prev = self.estado
-                    self.estado = 'nivel1'
-                    self.jugar.sound.play()
+                
         
         return super().handle_events(events)   
        
@@ -120,18 +180,15 @@ class Game(GameBase):
             self.surface.blit(self.salir.image, self.salir.rect)
             
         if self.estado == 'nivel1':
-    
             self.surface.blit(self.fondo, (0,0))
             self.surface.blit(self.tablero, (360,50))
             self.surface.blit(self.rojo.image, self.rojo.forma )
-            self.surface.blit(self.verde.image, self.verde.forma)
+            self.surface.blit(self.morado.image, self.morado.forma)
             self.surface.blit(self.camion_r.image, self.camion_r.forma)
-        if self.mover == True:
-            if self.act_car is None:
-                self.mover = False
-                return 
-            self.carros[self.act_car].forma.move_ip(self.cood[0], 0)
-              
+            self.surface.blit(self.negro.image, self.negro.forma )
+            self.surface.blit(self.gris.image, self.gris.forma )
+            self.surface.blit(self.camion_v.image, self.camion_v.forma )
+            self.surface.blit(self.reiniciar.image, self.reiniciar.rect)
 
         
 if __name__ == '__main__':

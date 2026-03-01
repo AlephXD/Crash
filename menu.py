@@ -6,7 +6,7 @@ pygame.mixer.init()
 
 screen = pygame.display.set_mode([1280, 720])
 pygame.display.set_caption("Crash")
-fondo = pygame.image.load("PortadaFinal.png").convert()
+fondo = pygame.image.load("assets//PortadaFinal.png").convert()
 jugar = Boton("assets//BotonJugar.png", "Sonido//Click.mp3", (550, 345), 0.1)
 niveles = Boton("assets//BotonNiveles.png", "Sonido//Click.mp3", (550, 445), 0.1)
 salir = Boton("assets//BotonSalirRojo.png", "Sonido//Click.mp3", (550, 545), 0.1)
