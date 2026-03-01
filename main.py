@@ -5,8 +5,6 @@ from pathlib import Path
 from cars import vehiculo
 from enfocate import GameBase, GameMetadata, COLORS
 
-SCREENWIDTH, SCREENHEIGHT = 1280, 720
-FPS = 60
 class Game(GameBase):
     
     
@@ -25,21 +23,23 @@ class Game(GameBase):
         
         self.estado = 'start'
         self.estado_prev = None
-        
+        self.moviendo = False
+        self.mover = False
+        self.cood = ()
         lw=pygame.Rect(360,10,700,90)
         la=pygame.Rect(360,10,45,700)
         ld=pygame.Rect(920,10,50,700)
         ls=pygame.Rect(360,610,700,50)
         self.mr = self.mv = self.mcr = self.ma = self.mca = self.mcv = self.mg = [lw, la, ld, ls]
-        self.act_car= None
+        self.act_car = None
      
     def on_start(self):
         
         self.tablero = pygame.image.load(Path("assets")/"tablero.png").convert_alpha()
         self.tablero = pygame.transform.scale(self.tablero,(600,600))
-        self.camion_r = vehiculo('camionr',(0, 0), Path("assets")/ "camion2.png", (0,0), self.mcr, 'v')
-        self.verde = vehiculo('verde',(0,0), Path("assets")/ "autoverde2.png",(0,0), self.mv,  'v')
-        self.rojo= vehiculo('rojo',(0,0), Path("assets")/ "rojo2.png",(0,0), self.mr,   'h')
+        self.camion_r = vehiculo('camionr',(875, 225), Path("assets")/ "camion2.png", (80,250), self.mcr, 'v')
+        self.verde = vehiculo('verde',(445, 180), Path("assets")/ "autoverde2.png",(80,150), self.mv,  'v')
+        self.rojo= vehiculo('rojo',(490,315), Path("assets")/ "rojo2.png",(150,80), self.mr,   'h')
         dir_jugar= Path("assets")/ "BotonJugar.png"
         dir_click= Path("Sonido")/"Click.mp3"
         self.jugar =  Boton(dir_jugar, dir_click, (550, 345), 0.1)
@@ -53,6 +53,28 @@ class Game(GameBase):
         
     def update(self, dt: float):
         
+        if self.moviendo:
+            if self.act_car is None:
+                self.moviendo = False
+                return 
+            print(self.cood)
+            if self.carros[self.act_car].sen == 'h':
+                old_pos = self.carros[self.act_car].forma.topleft
+                self.mover = True
+                self.carros[self.act_car].forma.move_ip(self.cood[0], 0)
+                print("moviendo")
+                for colision in self.carros[self.act_car].muros:
+                    if self.carros[self.act_car].forma.colliderect(colision):
+                        self.carros[self.act_car].forma.topleft = old_pos
+                            
+            elif self.carros[self.act_car].sen == 'v':
+                old_pos = self.carros[self.act_car].forma.topleft
+                self.carros[self.act_car].forma.move_ip(0, self.cood[1])
+                print("moviendo")
+                for colision in self.carros[self.act_car].muros:
+                    if self.carros[self.act_car].forma.colliderect(colision):
+                        self.carros[self.act_car].forma.topleft = old_pos
+            self.moviendo = False
         pass
            
     def handle_events(self, events: list[pygame.event.Event]):
@@ -77,18 +99,9 @@ class Game(GameBase):
         #Mover junto al mouse
                 if event.type == pygame.MOUSEMOTION:
                     if self.act_car != None:
-                        if self.carros[self.act_car].sen == 'h':
-                            old_pos = self.carros[self.act_car].forma.topleft
-                            self.carros[self.act_car].forma.move_ip(event.rel[0], 0)
-                            for colision in self.carros[self.act_car].muros:
-                                if self.carros[self.act_car].forma.colliderect(colision):
-                                    self.carros[self.act_car].forma.topleft = old_pos
-                        elif self.carros[self.act_car].sen == 'v':
-                            old_pos = self.carros[self.act_car].forma.topleft
-                            self.carros[self.act_car].forma.move_ip(0, event.rel[1])
-                            for colision in self.carros[self.act_car].muros:
-                                if self.carros[self.act_car].forma.colliderect(colision):
-                                    self.carros[self.act_car].forma.topleft = old_pos
+                        self.cood = event.rel
+                        self.moviendo = True
+                    
                                             
                 if self.jugar.es_presionado():
                     self.estado_prev = self.estado
@@ -107,15 +120,17 @@ class Game(GameBase):
             self.surface.blit(self.salir.image, self.salir.rect)
             
         if self.estado == 'nivel1':
-            self.camion_r.cambiar((875, 225), Path("assets")/ "camion2.png", (80,250), 'v')
-            self.rojo.cambiar((490,315), Path("assets")/ "rojo2.png", (150,80), 'h')
-            self.verde.cambiar((445, 180), Path("assets")/ "autoverde2.png", (80,150), 'v')
+    
             self.surface.blit(self.fondo, (0,0))
             self.surface.blit(self.tablero, (360,50))
             self.surface.blit(self.rojo.image, self.rojo.forma )
             self.surface.blit(self.verde.image, self.verde.forma)
             self.surface.blit(self.camion_r.image, self.camion_r.forma)
-        
+        if self.mover == True:
+            if self.act_car is None:
+                self.mover = False
+                return 
+            self.carros[self.act_car].forma.move_ip(self.cood[0], 0)
               
 
         
